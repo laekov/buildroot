@@ -61,3 +61,4 @@ BR2_ROOTFS_POST_SCRIPT_ARGS="--add-pi3-miniuart-bt-overlay --enable-camera"
 BR2_PACKAGE_BUSYBOX_SHOW_OTHERS=y
 BR2_PACKAGE_NETCAT=y
 BR2_PACKAGE_NGINX=y
+BR2_PACKAGE_NGINX_ADD_MODULES="/home/laekov/buildroot/pack/nginx-rtmp-module"
