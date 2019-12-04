@@ -1,0 +1,26 @@
+<html>
+	<head>
+		<title>Minimon</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+		<link href="https://cdn.bootcss.com/video.js/7.6.5/alt/video-js-cdn.min.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<div style="margin-left:0; margin-right:0;">
+			<video id=suvcam width=1024 height=768 class="video-js vjs-default-skin" controls muted="muted">
+				  <source src="/cam/magic.m3u8" type="application/x-mpegURL">
+			</video>
+		</div>
+		<script src="https://cdn.bootcss.com/video.js/7.6.5/video.min.js"></script>
+		<script src="https://cdn.bootcss.com/videojs-contrib-hls/5.15.0/videojs-contrib-hls.min.js"></script>
+		<script>
+			var wid = Math.min(1024, window.innerWidth);
+			var hei = Math.floor(wid * 3 / 4);
+			document.getElementById('suvcam').setAttribute('width', wid);
+			document.getElementById('suvcam').setAttribute('height', hei);
+			var player = videojs('suvcam');
+			player.play();
+		</script>
+	</body>
+</html>
