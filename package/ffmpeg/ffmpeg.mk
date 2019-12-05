@@ -262,8 +262,8 @@ FFMPEG_CONF_OPTS += --disable-vdpau
 endif
 
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
-FFMPEG_CONF_OPTS += --enable-mmal --enable-omx --enable-omx-rpi \
-	--extra-cflags=-I$(STAGING_DIR)/usr/include/IL
+# FFMPEG_CONF_OPTS += --enable-mmal --enable-omx --enable-omx-rpi \
+	# --extra-cflags=-I$(STAGING_DIR)/usr/include/IL
 FFMPEG_DEPENDENCIES += rpi-userland
 else
 FFMPEG_CONF_OPTS += --disable-mmal --disable-omx --disable-omx-rpi
