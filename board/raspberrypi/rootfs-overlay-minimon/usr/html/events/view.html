@@ -1,0 +1,37 @@
+<html>
+	<head>
+		<title>Minimon - event view</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+		<script src='eventview.js'></script>
+<style>
+table.main {
+	border: none;
+}
+img {
+	width: 320px;
+}
+</style>
+	</head>
+
+	<body>
+		<h3>Minimon Event at <span id='eid'>Unknown event</span></h3>
+		<table id='events'>
+			<thead>
+				<th>Original</th>
+				<th>Delta</th>
+				<th>hints</th>
+			</thead>
+			<tbody id='imgs'>
+			</tbody>
+		</table>
+		<table style='display: none'>
+			<tr id='sample_tr'>
+				<td><img id='origimg'></img></td>
+				<td><img id='diffimg'></img></td>
+				<td><div id='hints'></div></td>
+			</tr>
+		</table>
+	</body>
+</html>
