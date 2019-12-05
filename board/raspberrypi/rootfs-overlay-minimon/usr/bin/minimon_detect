@@ -1,0 +1,48 @@
+#!/usr/bin/python
+import cv2
+import time
+import numpy as np
+import os
+
+
+save_root = '/usr/html/events'
+
+
+def main():
+    cap = cv2.VideoCapture('rtmp://127.0.0.1:9305/cam/magic')
+
+    print 'Loaded'
+
+    last_frame, last_time = cap.read()[1], time.time()
+
+    last_note_timestamp = -1
+    note_name = None
+
+    while True:
+        cur_frame, cur_time = cap.read()[1], time.time()
+        if cur_time - last_time < 1.:
+            continue
+        diff_mat = np.abs(np.int32(cur_frame) - np.int32(last_frame))
+        diff_val = diff_mat.sum()
+        if diff_val > diff_mat.size * 10:
+            last_note_timestamp = cur_time
+        if cur_time - last_note_timestamp < 5.1:
+            if note_name is None:
+                lt = time.localtime()
+                note_name = '{:02d}{:02d}{:02d}-{:02d}{:02d}{:02d}'.format(lt.tm_year, lt.tm_mon, lt.tm_mday,
+                        lt.tm_hour, lt.tm_min, lt.tm_sec)
+                with open(os.path.join(save_root, 'meta'), 'a') as f:
+                    f.write('{}\n'.format(note_name))
+                os.mkdir(os.path.join(save_root, note_name))
+            frame_name = str(int(cur_time * 1000))
+            with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
+                f.write('{} {} {}\n'.format(frame_name, diff_val / diff_mat.size, time.time() - cur_time))
+            cv2.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
+            cv2.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), diff_mat)
+        else:
+            note_name = None
+        last_frame, last_time = cur_frame, cur_time
+
+
+if __name__ == '__main__':
+    main()
