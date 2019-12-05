@@ -5,7 +5,7 @@ import numpy as np
 import os
 
 
-save_root = '/usr/html/events'
+save_root = '/usr/html/eventdata'
 
 
 def main():

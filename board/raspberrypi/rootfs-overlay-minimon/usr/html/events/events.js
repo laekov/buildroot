@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	$.get('/events/meta', function(data) {
+	$.get('/eventdata/meta', function(data) {
 		var sds = data.split('\n');
 		for (var i in sds) {
 			if (sds[i].length < 2) {
