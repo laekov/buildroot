@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import cv2
+import cv2 as cv
 import time
 import numpy as np
 import os
@@ -7,9 +7,34 @@ import os
 
 save_root = '/usr/html/eventdata'
 
+class_names = ['Other', 'Paper', 'Rock', 'Scissors']
+
+
+def draw_rects(img, rects, color):
+    for x1, y1, x2, y2 in rects:
+        cv.rectangle(img, (x1, y1), (x2, y2), color, 2)
+
+
+def draw_str(dst, target, s, scale=1., color=(255, 255, 255)):
+    x, y = target
+    cv.putText(dst, s, (x+1, y+1), cv.FONT_HERSHEY_PLAIN, scale, (0, 0, 0), thickness = 2, lineType=cv.LINE_AA)
+    cv.putText(dst, s, (x, y), cv.FONT_HERSHEY_PLAIN, scale, color, lineType=cv.LINE_AA)
+
+
+def classify(x, netf, netc):
+    x = cv.resize(x, (224, 224)).transpose(2, 0, 1).reshape(1, 3, 224, 224)[:,::-1] / 255.
+    netf.setInput(x)
+    features = netf.forward().mean(axis=(2, 3))
+    netc.setInput(features)
+    logits = netc.forward()
+    return logits[0]
+
 
 def main():
-    cap = cv2.VideoCapture('rtmp://127.0.0.1:9305/cam/magic')
+    cap = cv.VideoCapture('rtmp://127.0.0.1:9305/cam/magic')
+
+    netf = cv.dnn.readNetFromONNX('/data/model/features.onnx')
+    netc = cv.dnn.readNetFromONNX('/data/model/classifier.onnx')
 
     print 'Loaded'
 
@@ -26,20 +51,37 @@ def main():
         diff_val = diff_mat.sum()
         if diff_val > diff_mat.size * 10:
             last_note_timestamp = cur_time
-        if cur_time - last_note_timestamp < 5.1:
+        if cur_time - last_note_timestamp < 5.1 or os.path.exists('/run/minimon_cap'):
             if note_name is None:
+                print 'Movement detected at {}'.format(time.time())
                 lt = time.localtime()
                 note_name = '{:02d}{:02d}{:02d}-{:02d}{:02d}{:02d}'.format(lt.tm_year, lt.tm_mon, lt.tm_mday,
                         lt.tm_hour, lt.tm_min, lt.tm_sec)
                 with open(os.path.join(save_root, 'meta'), 'a') as f:
                     f.write('{}\n'.format(note_name))
                 os.mkdir(os.path.join(save_root, note_name))
+
             frame_name = str(int(cur_time * 1000))
+            delta = float(diff_val) / float(diff_mat.size)
+
             with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
-                f.write('{} {} {}\n'.format(frame_name, diff_val / diff_mat.size, time.time() - cur_time))
-            cv2.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
-            cv2.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), diff_mat)
-        else:
+                f.write('{} {} {}\n'.format(frame_name, delta, time.time() - cur_time))
+
+            logits = classify(last_frame, netf, netc)
+            pred = logits.argmax()
+            print 'Detect results {} {}'.format(str(logits), class_names[pred])
+
+            # draw_str(last_frame, (20, 20), frame_name)
+            draw_str(last_frame, (20, 60), class_names[pred], scale=3., color=(0, 0, 255))
+            cv.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
+
+            eltime = (time.time() - cur_time)
+            draw_str(diff_mat, (20, 20),
+                    'diff = {:.3f}, time = {:.3f} ms, fps = {:.3f}'.format(delta, eltime * 1000, 1. / eltime))
+            cv.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), diff_mat)
+            print 'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime)
+        elif note_name is not None:
+            print 'Movement detection stopped'
             note_name = None
         last_frame, last_time = cur_frame, cur_time
 
