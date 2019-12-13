@@ -1,2 +1,2 @@
 #!/bin/sh
-raspivid -w 640 -h 480 -fps 25 -vf -hf -t 0 -o - | ffmpeg -i - -vcodec copy -an -f flv $1
+ffmpeg -f v4l2 -vcodec h264 -i /dev/video0 -vcodec copy -f flv $1
