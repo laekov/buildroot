@@ -40,49 +40,38 @@ def main():
 
     last_frame, last_time = cap.read()[1], time.time()
 
-    last_note_timestamp = -1
-    note_name = None
+    note_name = 'test'
+    if os.path.exists(os.path.join(save_root, note_name)):
+        import shutil
+        shutil.rmtree(os.path.join(save_root, note_name))
+    os.mkdir(os.path.join(save_root, note_name))
 
+    frame_idx = 0
     while True:
-        cur_frame, cur_time = cap.read()[1], time.time()
-        if cur_time - last_time < 1.:
-            continue
-        diff_mat = np.abs(np.int32(cur_frame) - np.int32(last_frame))
-        diff_val = diff_mat.sum()
-        if diff_val > diff_mat.size * 10:
-            last_note_timestamp = cur_time
-        if True:
-            if note_name is None:
-                print 'Movement detected at {}'.format(time.time())
-                lt = time.localtime()
-                note_name = '{:02d}{:02d}{:02d}-{:02d}{:02d}{:02d}'.format(lt.tm_year, lt.tm_mon, lt.tm_mday,
-                        lt.tm_hour, lt.tm_min, lt.tm_sec)
-                with open(os.path.join(save_root, 'meta'), 'a') as f:
-                    f.write('{}\n'.format(note_name))
-                os.mkdir(os.path.join(save_root, note_name))
+        for _ in range(30):
+            cur_frame, cur_time = cap.read()[1], time.time()
 
-            frame_name = str(int(cur_time * 1000))
-            delta = float(diff_val) / float(diff_mat.size)
+        if cur_frame is None:
+            break
 
-            with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
-                f.write('{} {} {}\n'.format(frame_name, delta, time.time() - cur_time))
+        frame_name = 'test{:03d}'.format(frame_idx)
+        frame_idx += 1
+        with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
+            f.write('{}\n'.format(frame_name))
 
-            logits = classify(last_frame, netf, netc)
-            pred = logits.argmax()
-            print 'Detect results {} {}'.format(str(logits), class_names[pred])
+        logits = classify(last_frame, netf, netc)
+        pred = logits.argmax()
+        print 'Detect results {} {}'.format(str(logits), class_names[pred])
 
-            # draw_str(last_frame, (20, 20), frame_name)
-            draw_str(last_frame, (20, 60), class_names[pred], scale=3., color=(0, 0, 255))
-            cv.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
+        draw_str(last_frame, (20, 80), class_names[pred], scale=3., color=(0, 0, 255))
+        eltime = (time.time() - cur_time)
+        draw_str(last_frame, (20, 20),
+                'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime))
 
-            eltime = (time.time() - cur_time)
-            draw_str(diff_mat, (20, 20),
-                    'diff = {:.3f}, time = {:.3f} ms, fps = {:.3f}'.format(delta, eltime * 1000, 1. / eltime))
-            cv.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), diff_mat)
-            print 'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime)
-        elif note_name is not None:
-            print 'Movement detection stopped'
-            note_name = None
+        cv.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
+        cv.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), last_frame)
+        print 'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime)
+
         last_frame, last_time = cur_frame, cur_time
 
 
