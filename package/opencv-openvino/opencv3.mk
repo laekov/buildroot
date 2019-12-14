@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-OPENCV3_VERSION = 3.4.8
+OPENCV3_VERSION = 4.1.2-openvino # 3.4.8
 OPENCV3_SITE = $(call github,opencv,opencv,$(OPENCV3_VERSION))
 OPENCV3_INSTALL_STAGING = YES
 OPENCV3_LICENSE = BSD-3-Clause
@@ -30,6 +30,8 @@ endif
 # OpenCV component options
 OPENCV3_CONF_OPTS += \
 	-DCMAKE_CXX_FLAGS="$(OPENCV3_CXXFLAGS)" \
+	-DWITH_INF_ENGINE=ON \
+	-DInferenceEngine_DIR=/home/laekov/buildroot/buildroot/output/build/dldt-2019_R3.1/inference-engine/buildroot-build \
 	-DBUILD_DOCS=OFF \
 	-DBUILD_PERF_TESTS=$(if $(BR2_PACKAGE_OPENCV3_BUILD_PERF_TESTS),ON,OFF) \
 	-DBUILD_TESTS=$(if $(BR2_PACKAGE_OPENCV3_BUILD_TESTS),ON,OFF) \

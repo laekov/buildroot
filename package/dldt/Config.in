@@ -1,0 +1,6 @@
+config BR2_PACKAGE_DLDT
+	bool "dldt"
+	help
+		DLDT contains the inference engine of OpenVINO that is needed by opencv
+		with openvino support
+		
