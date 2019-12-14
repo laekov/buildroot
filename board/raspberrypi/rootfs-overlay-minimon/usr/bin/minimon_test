@@ -9,6 +9,8 @@ save_root = '/usr/html/eventdata'
 
 class_names = ['Other', 'Paper', 'Rock', 'Scissors']
 
+output_pics = False
+
 
 def draw_rects(img, rects, color):
     for x1, y1, x2, y2 in rects:
@@ -23,7 +25,7 @@ def draw_str(dst, target, s, scale=1., color=(255, 255, 255)):
 
 def classify(x, netf, netc):
     x = cv.resize(x, (224, 224)).transpose(2, 0, 1).reshape(1, 3, 224, 224)[:,::-1] / 255.
-    netf.setInput(x)
+    netf.setInput(x.astype(np.float32))
     features = netf.forward().mean(axis=(2, 3))
     netc.setInput(features)
     logits = netc.forward()
@@ -34,7 +36,9 @@ def main():
     cap = cv.VideoCapture('/data/test_set.mp4')
 
     netf = cv.dnn.readNetFromONNX('/data/model/features.onnx')
+    netf.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
     netc = cv.dnn.readNetFromONNX('/data/model/classifier.onnx')
+    netc.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
 
     print 'Loaded'
 
@@ -47,32 +51,40 @@ def main():
     os.mkdir(os.path.join(save_root, note_name))
 
     frame_idx = 0
+    init_time = time.time()
+    
     while True:
-        for _ in range(30):
-            cur_frame, cur_time = cap.read()[1], time.time()
+        cur_frame, cur_time = cap.read()[1], time.time()
 
         if cur_frame is None:
             break
 
-        frame_name = 'test{:03d}'.format(frame_idx)
-        frame_idx += 1
-        with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
-            f.write('{}\n'.format(frame_name))
+        if output_pics:
+            frame_name = 'test{:03d}'.format(frame_idx)
+            with open(os.path.join(save_root, note_name, 'meta'), 'a') as f:
+                f.write('{}\n'.format(frame_name))
+
+        if frame_idx == 1:
+            init_time = time.time()
 
         logits = classify(last_frame, netf, netc)
         pred = logits.argmax()
-        print 'Detect results {} {}'.format(str(logits), class_names[pred])
 
-        draw_str(last_frame, (20, 80), class_names[pred], scale=3., color=(0, 0, 255))
         eltime = (time.time() - cur_time)
-        draw_str(last_frame, (20, 20),
-                'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime))
 
-        cv.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
-        cv.imwrite(os.path.join(save_root, note_name, frame_name + 'diff.jpg'), last_frame)
-        print 'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime)
+        if output_pics:
+            draw_str(last_frame, (20, 80), class_names[pred], scale=3., color=(0, 0, 255))
+            draw_str(last_frame, (20, 20),
+                    'time = {:.3f} ms, fps = {:.3f}'.format(eltime * 1000, 1. / eltime))
+
+            cv.imwrite(os.path.join(save_root, note_name, frame_name + 'orig.jpg'), last_frame)
+
+        print 'Detect results {}, time = {:.3f} ms, average fps = {:.3f}'.format(
+                class_names[pred], eltime * 1000,
+                max(0, frame_idx) / (time.time() - init_time))
 
         last_frame, last_time = cur_frame, cur_time
+        frame_idx += 1
 
 
 if __name__ == '__main__':

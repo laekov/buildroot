@@ -23,7 +23,7 @@ def draw_str(dst, target, s, scale=1., color=(255, 255, 255)):
 
 def classify(x, netf, netc):
     x = cv.resize(x, (224, 224)).transpose(2, 0, 1).reshape(1, 3, 224, 224)[:,::-1] / 255.
-    netf.setInput(x)
+    netf.setInput(x.astype(np.float32))
     features = netf.forward().mean(axis=(2, 3))
     netc.setInput(features)
     logits = netc.forward()
@@ -34,7 +34,9 @@ def main():
     cap = cv.VideoCapture('rtmp://127.0.0.1:9305/cam/magic')
 
     netf = cv.dnn.readNetFromONNX('/data/model/features.onnx')
+    netf.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
     netc = cv.dnn.readNetFromONNX('/data/model/classifier.onnx')
+    netc.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
 
     print 'Loaded'
 
