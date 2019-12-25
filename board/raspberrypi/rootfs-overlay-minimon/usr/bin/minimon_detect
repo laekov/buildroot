@@ -31,16 +31,22 @@ def classify(x, netf, netc):
 
 
 def main():
+    print 'Loading camera'
+
     cap = cv.VideoCapture('rtmp://127.0.0.1:9305/cam/magic')
+
+    print 'Loading model'
 
     netf = cv.dnn.readNetFromONNX('/data/model/features.onnx')
     netf.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
     netc = cv.dnn.readNetFromONNX('/data/model/classifier.onnx')
     netc.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
 
-    print 'Loaded'
-
     last_frame, last_time = cap.read()[1], time.time()
+
+    classify(last_frame, netf, netc)
+
+    print 'Loaded'
 
     last_note_timestamp = -1
     note_name = None

@@ -10,6 +10,10 @@ save_root = '/usr/html/eventdata'
 class_names = ['Other', 'Paper', 'Rock', 'Scissors']
 
 output_pics = False
+output_pics = True 
+
+video_source = 'rtmp://127.0.0.1:9305cam/magic'
+video_source = '/data/test_set.mp4'
 
 
 def draw_rects(img, rects, color):
@@ -33,7 +37,7 @@ def classify(x, netf, netc):
 
 
 def main():
-    cap = cv.VideoCapture('/data/test_set.mp4')
+    cap = cv.VideoCapture(video_source) 
 
     netf = cv.dnn.readNetFromONNX('/data/model/features.onnx')
     netf.setPreferableTarget(cv.dnn.DNN_TARGET_MYRIAD)
